@@ -1,14 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Globalization;
 using System.Web.Services;
 using System.Xml;
 using System.ServiceModel.Syndication;
-using System.Web.UI.WebControls.WebParts;
-using WebApplication1.Models;
-
 namespace RssFeedReaderService{
  
     [WebService(Namespace = "http://example.com/webservices")]
@@ -30,13 +25,40 @@ namespace RssFeedReaderService{
                     List<RssFeedItem> items = new List<RssFeedItem>();
                     foreach (SyndicationItem item in formatter.Feed.Items)
                     {
-                        items.Add(new RssFeedItem(item.Title.Text, item.Summary.Text));
+                        items.Add(new RssFeedItem(item.Title.Text, item.Summary.Text, urlText));
                     }
 
-                    return items.GetRange(0,70).ToArray();
-                    
-                    // todo: fix System.ServiceModel.QuotaExceededException 
-                    // return items.ToArray();
+                    return items.ToArray();
+                }
+            }
+            
+            return Array.Empty<RssFeedItem>();
+        }
+        
+        
+        [WebMethod]
+        public RssFeedItem[] GetFeedByKeyword(string urlText, string keyword){
+            if (!String.IsNullOrEmpty(urlText))
+            {
+                using (var reader = XmlReader.Create(urlText, new XmlReaderSettings()
+                {
+                    DtdProcessing=DtdProcessing.Parse
+                }))
+                {
+                    var formatter = new Rss20FeedFormatter();
+                    formatter.ReadFrom(reader);
+
+                    List<RssFeedItem> items = new List<RssFeedItem>();
+                    foreach (SyndicationItem item in formatter.Feed.Items)
+                    {
+                        if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(item.Title.Text, keyword, CompareOptions.IgnoreCase) >= 0
+                            || CultureInfo.InvariantCulture.CompareInfo.IndexOf(item.Summary.Text, keyword, CompareOptions.IgnoreCase) >= 0)
+                        {
+                            items.Add(new RssFeedItem(item.Title.Text, item.Summary.Text, urlText));
+                        }
+                    }
+
+                    return items.ToArray();
                 }
             }
             
@@ -48,11 +70,13 @@ namespace RssFeedReaderService{
     {
         public string title { get; set; }
         public string summary { get; set; }
+        public string source { get; set; }
     
         public RssFeedItem(){ }
     
-        public RssFeedItem(string title, string summary)
+        public RssFeedItem(string title, string summary, string source)
         {
+            this.source = source;
             this.title = title;
             this.summary = summary;
         }
