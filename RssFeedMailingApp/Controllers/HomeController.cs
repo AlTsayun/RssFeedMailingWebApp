@@ -6,6 +6,8 @@ using System.Web;
 using System.Web.Mvc;
 using RssFeedReaderService;
 using WebApplication1.Models;
+using WebApplication1.Models.FeedReader;
+using WebApplication1.Models.FeedReader.impl;
 using WebApplication1.RssFeedReaderService;
 
 namespace WebApplication1.Controllers
@@ -13,12 +15,19 @@ namespace WebApplication1.Controllers
     public class HomeController : Controller
     {
         private IFeedReaderServiceClient feedReader = new RssFeedReaderServiceClient();
+        private IFeedItem[] feedItems = {};
 
         public ActionResult Index()
         {
-            ViewBag.feedItems = feedReader.GetFeed("https://news.tut.by/rss");
+            ViewBag.feedItems = new IFeedItem[]{};
             return View();
         }
+
+        // public ActionResult Index(IFeedItem[] feedItems)
+        // {
+        //     ViewBag.feedItems = feedItems;
+        //     return View();
+        // }
 
 
         public ActionResult About()
@@ -34,12 +43,11 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost]
-        public RedirectResult StartEmailing(string urls, string emails)
+        public RedirectResult StartEmailing(string urls, string emails, string keywords)
         {
+            feedItems = feedReader.GetFeed("https://news.tut.by/rss");
             
-            // feedReader = new RssFeedReaderServiceSoapClient();
-            // feedItems = (IFeedItem[]) feedReader.GetFeed("https://news.tut.by/rss.html");
-            return Redirect("/Home/Index");
+            return Redirect("/");
         }
     }
 }

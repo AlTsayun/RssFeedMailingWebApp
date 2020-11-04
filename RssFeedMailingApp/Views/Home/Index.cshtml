@@ -1,4 +1,5 @@
 ﻿@using WebApplication1.Models
+@using WebApplication1.Models.FeedReader
 @{
     ViewBag.Title = "Home Page";
 }
@@ -46,11 +47,15 @@
             <p>
                 Enter rss sources separated by comma:
             </p>
-            @Html.TextBox("urls", "Enter urls")
+            @Html.TextBox("urls", "")
             <p>
                 Enter email addresses separated by comma:
             </p>
-            @Html.TextBox("emails", "Enter addresses")
+            @Html.TextBox("emails", "")
+            <p>
+                Enter keywords separated by comma:
+            </p>
+            @Html.TextBox("keywords", "")
             <p>
                 <input type="submit" value="Start emailing"/>
             </p>
