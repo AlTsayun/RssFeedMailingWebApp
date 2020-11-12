@@ -37,7 +37,7 @@ namespace RssFeedReaderService{
         
         
         [WebMethod]
-        public RssFeedItem[] GetFeedByKeyword(string urlText, string keyword){
+        public RssFeedItem[] GetFeedByKeywords(string urlText, string[] keywords){
             if (!String.IsNullOrEmpty(urlText))
             {
                 using (var reader = XmlReader.Create(urlText, new XmlReaderSettings()
@@ -51,10 +51,13 @@ namespace RssFeedReaderService{
                     List<RssFeedItem> items = new List<RssFeedItem>();
                     foreach (SyndicationItem item in formatter.Feed.Items)
                     {
-                        if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(item.Title.Text, keyword, CompareOptions.IgnoreCase) >= 0
-                            || CultureInfo.InvariantCulture.CompareInfo.IndexOf(item.Summary.Text, keyword, CompareOptions.IgnoreCase) >= 0)
+                        foreach (var keyword in keywords)
                         {
-                            items.Add(new RssFeedItem(item.Title.Text, item.Summary.Text, urlText));
+                            if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(item.Title.Text, keyword, CompareOptions.IgnoreCase) >= 0
+                                || CultureInfo.InvariantCulture.CompareInfo.IndexOf(item.Summary.Text, keyword, CompareOptions.IgnoreCase) >= 0)
+                            {
+                                items.Add(new RssFeedItem(item.Title.Text, item.Summary.Text, urlText));
+                            }                            
                         }
                     }
 
