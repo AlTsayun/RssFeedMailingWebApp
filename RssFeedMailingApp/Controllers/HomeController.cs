@@ -122,7 +122,7 @@ namespace WebApplication1.Controllers
         }
         private string concatenateFeedItems(List<IFeedItem> items, string source, string[] keywords)
         {
-            var res = new StringBuilder($"&lt;a href=&quot;{source}&quot;&gt;");
+            var res = new StringBuilder($"&lt;a href=&quot;{source}&quot;&gt;{source}&lt;/a&gt;");
             if (keywords != null && keywords.Length != 0)
             {
                 res.Append("&lt;br/&gt;keywords: ");
@@ -133,7 +133,7 @@ namespace WebApplication1.Controllers
             }
             foreach (var item in items)
             {
-                res.Append($"&lt;h3&gt;{item.title}&lt;/h3&gt;&lt;br/&gt;source&lt;/a&gt;&lt;br/&gt;{item.summary}&lt;br/&gt;");
+                res.Append($"&lt;h3&gt;{item.title}&lt;/h3&gt;&lt;br/&gt;{item.summary}&lt;br/&gt;");
             }
             return res.ToString();
         }
