@@ -94,13 +94,14 @@ namespace WebApplication1.Controllers
 
         public ActionResult About()
         {
-            ViewBag.Message = "Your application description page.";
+            ViewBag.Title = "About";
+            ViewBag.Message = "This is a simple web application, that provides gathering of news from rss sources and sending them to emails.";
             return View();
         }
 
         public ActionResult Contact()
         {
-            ViewBag.Message = "Your contact page.";
+            ViewBag.GitHubAccount = "https://github.com/altsayun";
             return View();
         }
 
