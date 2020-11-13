@@ -1,1 +1,0 @@
-<%@ Class="EmailSenderService.EmailSenderService" %>
