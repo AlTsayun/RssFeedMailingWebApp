@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using Antlr.Runtime.Tree;
@@ -21,51 +23,70 @@ namespace WebApplication1.Controllers
     {
         private const char separator = ',';
 
-        public async Task<ActionResult> Index(string urlsLine, string emailsLine, string keywordsLine)
+        public ActionResult Index(string urlsLine, string emailsLine, string keywordsLine)
         {
             //todo: concurrent collection
-            List<IFeedItem> allFeedItems = new List<IFeedItem>();
-            if (urlsLine != null && emailsLine != null && keywordsLine != null)
+            var allFeedItems = new ConcurrentStack<IFeedItem>();
+            if (urlsLine != null)
             {
-                var urls = separateStrings(urlsLine, separator);
-                var emails = separateStrings(emailsLine, separator);
-                var keywords = separateStrings(keywordsLine, separator);
+                string[] urls = separateStrings(urlsLine, separator);
+                string[] emails = separateStrings(emailsLine, separator);
+                string[] keywords;
+                if (keywordsLine != null)
+                {
+                    keywords = separateStrings(keywordsLine, separator);
+                }
+                else
+                {
+                    keywords = new string[]{};
+                }
 
                 IFeedReaderServiceClient feedReader = new RssFeedReaderServiceClient();
                 EmailSenderServiceClient emailer = new EmailSenderServiceImpl(); 
 
                 
-                var getFeedTasks = new List<Task<List<IFeedItem>>>();
+                var fullTasks = new List<Task>();
 
                 foreach (var url in urls)
                 {
-                    Task<List<IFeedItem>> task;
+                    Task<List<IFeedItem>> taskToGetFeed;
+                    Task fullTask;
                     if (keywords.Length == 0)
                     {
-                        task = feedReader.GetFeedAsync(url);
+                        taskToGetFeed = feedReader.GetFeedAsync(url);
                     }
                     else
                     {
-                        task = feedReader.GetFeedByKeywordsAsync(url, keywords);
+                        taskToGetFeed = feedReader.GetFeedByKeywordsAsync(url, keywords);
                     }
 
-                    task.ContinueWith(getFeedTask =>
+                    
+
+                    fullTask = taskToGetFeed.ContinueWith(getFeedTask =>
                     {
                         var currentFeedItems = getFeedTask.Result;
-                        allFeedItems.AddRange(currentFeedItems);
-                        
-                        //todo: email feed to all emails
-                        // foreach (var email in emails)
-                        // {
-                        //     
-                        // }
+                        allFeedItems.PushRange(currentFeedItems.ToArray());
+
+
+                        if (emailsLine != null)
+                        {
+                            foreach (var email in emails)
+                            {
+                                emailer.SendEmailAsync(email, concatenateFeedItems(currentFeedItems, url, keywords));
+                            }
+                        }
+
                     });
-                    getFeedTasks.Add(task);
+
+
+                    fullTasks.Add(fullTask);
                 }
 
+                Task.WaitAll(fullTasks.ToArray());
             }
-            
-            
+
+
+
             ViewBag.feedItems = allFeedItems;
 
             return View();
@@ -98,6 +119,23 @@ namespace WebApplication1.Controllers
             }
 
             return res.ToArray();
+        }
+        private string concatenateFeedItems(List<IFeedItem> items, string source, string[] keywords)
+        {
+            var res = new StringBuilder($"&lt;a href=&quot;{source}&quot;&gt;");
+            if (keywords != null && keywords.Length != 0)
+            {
+                res.Append("&lt;br/&gt;keywords: ");
+                foreach (var keyword in keywords)
+                {
+                    res.Append($"{keyword}, ");
+                }
+            }
+            foreach (var item in items)
+            {
+                res.Append($"&lt;h3&gt;{item.title}&lt;/h3&gt;&lt;br/&gt;source&lt;/a&gt;&lt;br/&gt;{item.summary}&lt;br/&gt;");
+            }
+            return res.ToString();
         }
     }
 }

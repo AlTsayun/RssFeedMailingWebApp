@@ -18,13 +18,12 @@ namespace WebApplication1.Models.FeedReader.impl
             return rssFeedItemsList;
         }
 
-        public async Task<List<IFeedItem>> GetFeedAsync(string urlText)
+        public Task<List<IFeedItem>> GetFeedAsync(string urlText)
         {            
-            var getFeedAsyncTask = new RssFeedReaderServiceSoapClient().GetFeedAsync(urlText);
-            
-            return await Task<List<IFeedItem>>.Run(() =>
+            return new RssFeedReaderServiceSoapClient().GetFeedAsync(urlText)
+                .ContinueWith(task =>
             {
-                var rssFeedItems = getFeedAsyncTask.Result.Body.GetFeedResult;
+                var rssFeedItems = task.Result.Body.GetFeedResult;
                 var rssFeedItemsList = new List<IFeedItem>();
                 foreach (var feedItemDto in rssFeedItems)
                 {
@@ -46,21 +45,20 @@ namespace WebApplication1.Models.FeedReader.impl
             }
             return rssFeedItemsList;
         }     
-        public async Task<List<IFeedItem>> GetFeedByKeywordsAsync(string urlText, string[] keywords)
+        public Task<List<IFeedItem>> GetFeedByKeywordsAsync(string urlText, string[] keywords)
         {
-            var getFeedAsyncTask = new RssFeedReaderServiceSoapClient().GetFeedByKeywordsAsync(urlText, convertArrayToArrayOfString(keywords));
-            
-            return await Task<List<IFeedItem>>.Run(() =>
-            {
-                var rssFeedItems = getFeedAsyncTask.Result.Body.GetFeedByKeywordsResult;
-                var rssFeedItemsList = new List<IFeedItem>();
-                foreach (var feedItemDto in rssFeedItems)
+            return new RssFeedReaderServiceSoapClient().GetFeedByKeywordsAsync(urlText, convertArrayToArrayOfString(keywords))
+                .ContinueWith(task =>
                 {
-                    rssFeedItemsList.Add(new RssFeedItem(feedItemDto.title, feedItemDto.summary, feedItemDto.source));
-                }
+                    var rssFeedItems = task.Result.Body.GetFeedByKeywordsResult;
+                    var rssFeedItemsList = new List<IFeedItem>();
+                    foreach (var feedItemDto in rssFeedItems)
+                    {
+                        rssFeedItemsList.Add(new RssFeedItem(feedItemDto.title, feedItemDto.summary, feedItemDto.source));
+                    }
 
-                return rssFeedItemsList;
-            });
+                    return rssFeedItemsList;
+                });
         }
 
         private ArrayOfString convertArrayToArrayOfString(string[] strings)

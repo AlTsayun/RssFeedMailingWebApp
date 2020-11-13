@@ -5,28 +5,36 @@ using System.Web.Services;
 namespace EmailSenderService{
  
     [WebService(Namespace = "http://example.com/webservices")]
-    public class EmailSender : WebService 
+    public class EmailSender : WebService
     {
+        private const string emailSrc = "rssfeedmailingapp@mail.ru";
+        private const string emailSrcPass = "OYfZZ5Iy8XIX";
+        private const string subject = "RSS feed";
+
+        private SmtpClient smtp = new SmtpClient()
+        {
+            Port = 587,
+            Host = $"smtp.mail.ru",
+            EnableSsl = true,
+            UseDefaultCredentials = false,
+            Credentials = new NetworkCredential(emailSrc, emailSrcPass),
+            DeliveryMethod = SmtpDeliveryMethod.Network
+        };
 
         [WebMethod]
-        public bool SendEmail(string emailSrc, string emailSrcPass, string emailDest, string subject, string messageText)
+        public bool SendEmail(string emailDest,  string messageText)
         {
             bool res = true;
             try
             {
-                MailMessage message = new MailMessage();
-                message.From = new MailAddress(emailSrc);
-                SmtpClient smtp = new SmtpClient();
+                MailMessage message = new MailMessage()
+                {
+                    From = new MailAddress(emailSrc),
+                    Subject = subject,
+                    IsBodyHtml = true,
+                    Body = WebUtility.HtmlDecode(messageText)
+                };
                 message.To.Add(new MailAddress(emailDest));
-                message.Subject = subject;
-                message.IsBodyHtml = false; //to make message body as html  
-                message.Body = messageText;
-                smtp.Port = 587;
-                smtp.Host = $"smtp.{emailSrc.Split('@')[1]}";
-                smtp.EnableSsl = true;
-                smtp.UseDefaultCredentials = false;
-                smtp.Credentials = new NetworkCredential(emailSrc, emailSrcPass);
-                smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
                 smtp.Send(message);
             }
             catch (Exception)

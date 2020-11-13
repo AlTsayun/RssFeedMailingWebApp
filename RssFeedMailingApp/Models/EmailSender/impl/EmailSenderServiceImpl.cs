@@ -5,15 +5,16 @@ namespace WebApplication1.Models.EmailSender.impl
 {
     public class EmailSenderServiceImpl : EmailSenderServiceClient
     {
-        public bool SendEmail(string emailSrc, string emailSrcPass, string emailDest, string subject, string messageText)
+        public bool SendEmail(string emailSrc, string emailSrcPass)
         {
-            return new EmailSenderSoapClient().SendEmail(emailSrc, emailSrcPass, emailDest, subject, messageText);
+            return new EmailSenderSoapClient().SendEmail(emailSrc, emailSrcPass);
         }
 
-        public async Task<bool> SendEmailAsync(string emailSrc, string emailSrcPass, string emailDest, string subject, string messageText)
+        public Task<bool> SendEmailAsync(string emailSrc, string emailSrcPass)
         {
-            var sendEmailTask = new EmailSenderSoapClient().SendEmailAsync(emailSrc, emailSrcPass, emailDest, subject, messageText);
-            return await Task<bool>.Run(() => sendEmailTask.Result.Body.SendEmailResult);
+            return new EmailSenderSoapClient()
+                .SendEmailAsync(emailSrc, emailSrcPass)
+                .ContinueWith(task => task.Result.Body.SendEmailResult);
         }
     }
 }
